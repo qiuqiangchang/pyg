@@ -4,6 +4,9 @@ import tk.mybatis.mapper.common.Mapper;
 
 import com.pinyougou.pojo.Brand;
 
+import java.io.Serializable;
+import java.util.List;
+
 /**
  * BrandMapper 数据访问接口
  * @date 2019-03-29 16:08:26
@@ -11,4 +14,8 @@ import com.pinyougou.pojo.Brand;
  */
 public interface BrandMapper extends Mapper<Brand>{
 
+
+    List<Brand> findAll(Brand brand);
+
+    void deleteAll(Serializable[] ids);
 }

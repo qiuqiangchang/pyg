@@ -13,65 +13,101 @@
 	<script src="/plugins/angularjs/angular.min.js"></script>
 
 	<!--分页模块开始-->
-	<link rel="stylesheet" href="/plugins/angularjs/pagination.css">
+	<link rel="stylesheet" href="/plugins/angularjs/pagination.css"/>
 	<script src="/plugins/angularjs/pagination.js"></script>
 	<!--分页模块结束-->
 
 	<script type="text/javascript">
-		/** 定义模块 */
-		// 在构建app模块时引入pagination模块
-		var app = angular.module("pinyougou",["pagination"]);
-		/** 定义控制器 */
-		app.controller("brandController",function ($scope,$http) {
-
-		    // 定义分页指令需要的配置信息对象
-			$scope.paginationConf = {
-				currentPage:1,		// 当前页
-				totalItems:100,	// 总记录数，必须指定
-				itemsPerPage:8,	// 页大小
+        var app = angular.module('pinyougou',['pagination']);
+        app.controller("brandController",function ($scope,$http) {
+            // 定义分页指令需要的配置信息对象
+            $scope.paginationConf = {
+                currentPage:1,		// 当前页
+                totalItems:100,	// 总记录数，必须指定
+                itemsPerPage:8,	// 页大小
                 perPageOptions : [10,15,20,25,30], // 页码下拉列表框
-				onChange:function () {		// 页面发生改变会调用的函数
-					$scope.findByPage($scope.paginationConf.currentPage,
-									$scope.paginationConf.itemsPerPage);
+                onChange:function () {		// 页面发生改变会调用的函数
+                    $scope.reload();
                 }
-			}
+            }
+
+            $scope.reload = function () {
+                $scope.findByPage($scope.paginationConf.currentPage,
+                    $scope.paginationConf.itemsPerPage);
+            }
 
             // 分页查询
-			$scope.findByPage = function (page,rows) {
-				$http.get("/brand/findByPage?page=" + page + "&rows=" + rows).then(function (response) {
-					$scope.dataList = response.data.rows;
-					$scope.paginationConf.totalItems = response.data.total;
+            $scope.findByPage = function (page,rows) {
+                $http({
+                    url:"/brand/findByPage?page=" +page + "&rows=" + rows,
+                    method:"get",
+                    params:$scope.searchEntity
+                }).then(function (response) {
+                    $scope.dataList = response.data.rows;
+                    $scope.paginationConf.totalItems = response.data.total;
                 });
             }
 
             // 添加或修改
-			$scope.saveOrUpdate = function () {
-			    // 判断添加还是修改
-				var url = "save";
-				if ($scope.brand.id){
-				    url = "update";
-				}
-				$http.post("/brand/" + url,$scope.brand).then(function (response) {
-				    if (response.data){
-                        $scope.findByPage();
+            $scope.saveOrUpdate = function () {
+                // 判断添加还是修改
+                var url = "save";
+                if ($scope.brand.id){
+                    url = "update";
+                }
+                $http.post("/brand/" + url,$scope.brand).then(function (response) {
+                    if (response.data){
+                        $scope.reload();
                     } else {
-				        alert("添加失败");
-					}
+                        alert("添加失败");
+                    }
                 })
             }
 
             // 修改点击事件
-			$scope.show = function (entity) {
-			    var jsonStr = JSON.stringify(entity);  // 先转成字符串
-				$scope.brand = JSON.parse(jsonStr);	// 再转成json对象,解除双向绑定，自动同步
+            $scope.show = function (entity) {
+                var jsonStr = JSON.stringify(entity);  // 先转成字符串
+                $scope.brand = JSON.parse(jsonStr);	// 再转成json对象,解除双向绑定，自动同步
             }
 
-        })
+            // 定义数组，用于判断品牌是否被选中
+            $scope.ids = [];
+
+            // 复选框点击事件
+            $scope.updateSelection = function ($event, id) {
+                // 如果选中就添加到数组中
+                if($event.target.checked){
+                    $scope.ids.push(id);
+                } else {
+                    // 没有选中就删除，可能之前选中保存后点取消保存下来的
+                    var index = $scope.ids.indexOf(id);
+                    $scope.ids.splice(index,1);
+                }
+            }
+
+            // 批量删除
+            $scope.delete = function () {
+                if ($scope.ids.length > 0){
+                    if (confirm("确定删除？")){
+                        $http.get(
+                            "/brand/delete?ids=" + $scope.ids
+                        ).then(function () {
+                            $scope.ids = [];
+                            $scope.reload();
+                        });
+                    }
+                } else {
+                    alert("选中要删除的品牌");
+                }
+            }
+        });
 	</script>
+
+
     
 </head>
 <body class="hold-transition skin-red sidebar-mini"
-	  ng-app="pinyougou" ng-controller="brandController" ng-init="findByPage()"	>
+	  ng-app="pinyougou" ng-controller="brandController" ng-init="reload()">
 	<!-- .box-body -->
 	<div class="box-header with-border">
 		<h3 class="box-title">品牌管理</h3>
@@ -86,7 +122,7 @@
 					<div class="btn-group">
 						<button type="button" class="btn btn-default" title="新建" ng-click="brand={}" data-toggle="modal" data-target="#editModal" >
 							<i class="fa fa-file-o"></i> 新建</button>
-						<button type="button" class="btn btn-default" title="删除" ><i class="fa fa-trash-o"></i> 删除</button>           
+						<button type="button" class="btn btn-default" title="删除" ng-click="delete()"><i class="fa fa-trash-o"></i> 删除</button>
 						<button type="button" class="btn btn-default" title="刷新" onclick="window.location.reload();"><i class="fa fa-refresh"></i> 刷新</button>
 					</div>
 				</div>
@@ -96,12 +132,12 @@
 					<!--  查询条件区-->
 					<table>
 						<tr>
-							<td><input class="form-control" placeholder="品牌名称">
+							<td><input ng-model="searchEntity.name" class="form-control" placeholder="品牌名称">
 							</td>
-							<td><input class="form-control" placeholder="首字母">
+							<td><input ng-model="searchEntity.firstChar" class="form-control" placeholder="首字母">
 							</td>
 							<td>
-								<button type="button" class="btn btn-default">
+								<button ng-click="reload()" type="button" class="btn btn-default">
 									<i class="fa fa-trash-o"></i> 查询
 								</button>
 							</td>
@@ -125,7 +161,7 @@
 				</thead>
 				<tbody>
 					<tr ng-repeat="entity in dataList">
-						<td><input  type="checkbox" ></td>			                              
+						<td><input  type="checkbox" ng-click="updateSelection($event,entity.id)"></td>
 						<td>{{entity.id}}</td>
 						<td>{{entity.name}}</td>
 						<td>{{entity.firstChar}}</td>

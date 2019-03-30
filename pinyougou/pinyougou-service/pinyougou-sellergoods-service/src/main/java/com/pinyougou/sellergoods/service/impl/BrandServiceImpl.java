@@ -41,7 +41,11 @@ public class BrandServiceImpl implements BrandService {
 
     @Override
     public void deleteAll(Serializable[] ids) {
-
+        try {
+           brandMapper.deleteAll(ids);
+        } catch (Exception e){
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -55,6 +59,13 @@ public class BrandServiceImpl implements BrandService {
 
     @Override
     public PageResult findByPage(Brand brand, int page, int rows) {
-        return null;
+        // 开始分页
+        PageInfo<Brand> pageInfo = PageHelper.startPage(page, rows).doSelectPageInfo(new ISelect() {
+            @Override
+            public void doSelect() {
+                brandMapper.findAll(brand);
+            }
+        });
+        return new PageResult(pageInfo.getTotal(),pageInfo.getList());
     }
 }
