@@ -4,5 +4,10 @@
 	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.pinyougou.mapper.ItemCatMapper">
-
+	<delete id="deleteAll">
+		delete from tb_item_cat where id in
+		<foreach collection="ids" item="id" open="(" close=")" separator=",">
+			#{id}
+		</foreach>
+	</delete>
 </mapper>

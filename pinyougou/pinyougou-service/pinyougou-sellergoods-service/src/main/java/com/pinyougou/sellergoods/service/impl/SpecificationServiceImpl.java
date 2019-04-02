@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 规格服务接口实现
@@ -85,6 +86,15 @@ public class SpecificationServiceImpl implements SpecificationService {
             throw  new RuntimeException(e);
         }
 
+    }
+
+    @Override
+    public List<Map<String, Object>> findSpecList() {
+        try {
+            return specificationMapper.findSpecList();
+        }catch (Exception e){
+            throw new RuntimeException(e);
+        }
     }
 
 

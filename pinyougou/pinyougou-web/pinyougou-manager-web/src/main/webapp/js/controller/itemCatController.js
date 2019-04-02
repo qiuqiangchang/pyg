@@ -4,6 +4,36 @@ app.controller('itemCatController', function($scope, $controller, baseService){
     /** 指定继承baseController */
     $controller('baseController',{$scope:$scope});
 
+
+    /** 通过父级id查询*/
+    $scope.findItemCatByParentId = function (parentId) {
+        baseService.sendGet("/itemCat/findItemCatByParentId?parentId=" + parentId)
+            .then(function (response) {
+                $scope.dataList = response.data;
+            })
+    };
+
+    /** 查询下级*/
+    $scope.grade = 1;
+
+    $scope.selectList = function (entity,grade) {
+
+        $scope.grade = grade;
+
+        if (grade == 1){
+            $scope.itemCat_1 = null;
+            $scope.itemCat_2 = null;
+        }
+        if (grade == 2){
+            $scope.itemCat_1 = entity;
+        }
+        if (grade == 3){
+            $scope.itemCat_2 = entity;
+        }
+        $scope.findItemCatByParentId(entity.id);
+    }
+
+
     /** 查询条件对象 */
     $scope.searchEntity = {};
     /** 分页查询(查询条件) */
@@ -45,15 +75,17 @@ app.controller('itemCatController', function($scope, $controller, baseService){
     /** 批量删除 */
     $scope.delete = function(){
         if ($scope.ids.length > 0){
-            baseService.deleteById("/itemCat/delete", $scope.ids)
-                .then(function(response){
-                    if (response.data){
-                        /** 重新加载数据 */
-                        $scope.reload();
-                    }else{
-                        alert("删除失败！");
-                    }
-                });
+            if (confirm("确定删除？")){
+                baseService.deleteById("/itemCat/delete", $scope.ids)
+                    .then(function(response){
+                        if (response.data){
+                            /** 重新加载数据 */
+                            $scope.findItemCatByParentId(0);
+                        }else{
+                            alert("删除失败！");
+                        }
+                    });
+            }
         }else{
             alert("请选择要删除的记录！");
         }

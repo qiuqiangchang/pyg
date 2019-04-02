@@ -40,22 +40,56 @@ app.controller('typeTemplateController', function($scope, $controller, baseServi
     $scope.show = function(entity){
        /** 把json对象转化成一个新的json对象 */
        $scope.entity = JSON.parse(JSON.stringify(entity));
+       // 转换品牌
+        $scope.entity.brandIds = JSON.parse(entity.brandIds);
+        // 转换规格
+        $scope.entity.specIds = JSON.parse(entity.specIds);
+        // 转换扩展属性
+        $scope.entity.customAttributeItems = JSON.parse(entity.customAttributeItems);
     };
 
     /** 批量删除 */
     $scope.delete = function(){
         if ($scope.ids.length > 0){
-            baseService.deleteById("/typeTemplate/delete", $scope.ids)
-                .then(function(response){
-                    if (response.data){
-                        /** 重新加载数据 */
-                        $scope.reload();
-                    }else{
-                        alert("删除失败！");
-                    }
-                });
-        }else{
+            if (confirm("确认删除？")){
+                baseService.deleteById("/typeTemplate/delete", $scope.ids)
+                    .then(function(response){
+                        if (response.data){
+                            /** 重新加载数据 */
+                            $scope.reload();
+                        }else{
+                            alert("删除失败！");
+                        }
+                    });
+            }
+        }
+        else{
             alert("请选择要删除的记录！");
         }
     };
+
+    // 查询品牌数据
+    $scope.findBrandList = function () {
+        // 发送异步请求
+        baseService.sendGet("/brand/findBrandList").then(function (response) {
+            $scope.brandList = {data:response.data};
+        })
+    };
+
+    // 查询规格数据
+    $scope.findSpecList = function () {
+        baseService.sendGet("/specification/findSpecList").then(function (response) {
+            $scope.specList = {data:response.data};
+        })
+    };
+
+    // 新增扩展属性增加行
+    $scope.addTableRow = function () {
+        $scope.entity.customAttributeItems.push({});
+    }
+
+    // 新增扩展属性删除行
+    $scope.deleteTableRow = function (index) {
+        $scope.entity.customAttributeItems.splice(index,1);
+    }
 });

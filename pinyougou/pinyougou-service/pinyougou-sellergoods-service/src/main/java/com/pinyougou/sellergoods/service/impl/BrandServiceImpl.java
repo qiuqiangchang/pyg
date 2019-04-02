@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 品牌服务接口实现
@@ -67,5 +68,14 @@ public class BrandServiceImpl implements BrandService {
             }
         });
         return new PageResult(pageInfo.getTotal(),pageInfo.getList());
+    }
+
+    @Override
+    public List<Map<String, Object>> findAllByIdAndName() {
+        try {
+            return brandMapper.findAllByIdAndName();
+        } catch (Exception e){
+            throw new RuntimeException(e);
+        }
     }
 }
